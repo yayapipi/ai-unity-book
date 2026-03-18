@@ -1,0 +1,84 @@
+---
+description: |
+  Unity C# 腳本開發規範與最佳實踐。用於指導 Cursor 在生成、修改
+  `Assets/**/*.cs` 內的 Unity 腳本時，保持一致的風格與高可讀性，避免常見
+  性能/架構問題。
+globs:
+  - Assets/**/*.cs
+  - Packages/**/*.cs
+alwaysApply: true
+---
+
+## 目標
+- 保持代碼乾淨簡單、容易使用、清晰、可維護、可擴展。
+- 避免不必要的 GC 分配與每幀開銷。
+- 使用一致的命名與生命週期方法順序。
+- 盡量把可以控制的變數開放在 Inspector 中進行設定。
+- Function 上方加上直覺容易理解的註解
+
+### 命名規範
+- 類名/結構名：PascalCase，如 `PlayerController`。
+- 方法名：PascalCase，如 `StartMovement()`。
+- 變量/欄位名：camelCase，如 `moveSpeed`。常量使用 `PascalCase` 或 `UPPER_SNAKE_CASE`。
+- 序列化欄位：加 `[SerializeField] private`，公開 API 再用 `public`。
+- 事件：使用名詞+動詞，`OnXxxHappened`；委託型欄位以 `Handler` 或 `Action` 結尾。
+
+### 文件與類
+- 一個 `.cs` 文件僅包含一個公共類。文件名與公共類名一致。
+- 避免在同檔中放置多個 MonoBehaviour。
+- 在 `Awake` 做引用快取、資料初始化；避免昂貴操作。
+- 在 `Start` 依賴其他物件初始化完成後再做邏輯。
+- 物理邏輯放 `FixedUpdate`；跟隨攝影機或排序放 `LateUpdate`。
+- 使用 `OnEnable/OnDisable` 註冊/反註冊事件，避免漏記憶體或重複註冊。
+
+### 序列化與 Inspector
+- 盡量使用 `[SerializeField] private` 暴露到 Inspector，保持封裝性。
+- 使用 `[Header]`, `[Tooltip]`, `[Range]` 改善可用性。
+- 頻繁查找的組件在 `Awake` 快取，如 `rigidbody2D`, `spriteRenderer`。
+
+### Update/協程/事件
+- 減少 `Update` 中的分配與反覆查找；若非每幀需要，改用事件或計時器。
+- 大量定時邏輯用協程或 `InvokeRepeating`；但注意在 `OnDisable` 停止。
+- 使用 `Time.deltaTime` 處理幀率無關邏輯。
+
+### 滑鼠點擊時間
+- 使用Ipointer來處理滑鼠點擊拖拽的時間
+
+### 物理
+- 物理運算放在 `FixedUpdate`，並使用 `Time.fixedDeltaTime`。
+- 僅在必要時使用 `Rigidbody` 與碰撞回調；避免在 `Update` 手動移動剛體。
+
+### 資源與記憶體
+- 避免每幀產生臨時字串/Boxing；重用 `StringBuilder` 或快取陣列/列表。
+- 使用 `ObjectPool` 重用頻繁生成/銷毀的物件。
+- 使用 `using` 或顯式釋放非受管資源。
+
+### 日誌與錯誤處理
+- 開發期可用 `Debug.Log/Warning/Error`；生產需集中管理與可關閉。
+- 避免在熱路徑頻繁 `Log`；必要時加開關。
+
+### 依賴與測試性
+- 盡量依賴抽象（介面）而非具體實作，便於替換與測試。
+- 使用組合優於繼承；避免深層繼承樹。
+
+### 註釋與文件
+- 寫「為什麼」而非「怎麼做」。對複雜流程添加方法註解或 XML doc。
+- 不要解釋顯而易見的代碼；保持代碼自註解化。
+
+### 格式化
+- 與現有風格一致；長參數列表分行；避免過深巢狀。
+- 早返回簡化條件；適度拆分長方法（>80-100 行）。
+
+### 常見反模式（避免）
+- 在 `Update` 內 `FindObjectOfType`/`GetComponent`。
+- 無節制的 `new` 或 string 拼接造成 GC。
+- 公開可寫欄位導致狀態不可控。
+- 在 `OnDestroy` 才解註冊事件（可能不會被調用），改用 `OnDisable`。
+
+### 檔案/資料夾結構建議
+- Editor 專用腳本放 `Editor/` 並使用 `#if UNITY_EDITOR` 條件編譯。
+
+### 範例片段（原則示意）
+- 使用 `[SerializeField] private` + 屬性只讀公開。
+- 在 `Awake` 快取引用；在 `OnEnable/OnDisable` 註冊/解註冊事件。
+- 物理相關移動放 `FixedUpdate`。

@@ -1,0 +1,11 @@
+修改 @PetAIChatController：
+1. 加上Emotion的Slider UI變量
+2. AI內容會回傳以下Json結構，收到之後解析成C# Class @AIPetResponse
+{
+  "content": "reply content",
+  "emotion": "determine based on player content" // good, bad, neutral
+}
+3. 根據emotion欄位的文字進行判斷： 
+- 如果是好心情（good），Slider的好感度數值就+1
+- 如果是壞心情（bad），Slider的好感度就-1
+- 如果是中性的（neutral），則Slider保持原本的數值。
